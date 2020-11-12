@@ -45,7 +45,7 @@ if __name__ == "__main__":
             for base_url in products:
                 time.sleep(3)
                 print(datetime.now(), "fetching page")
-                res = requests.get(base_url, headers={'User-Agent': ua}, proxies={'https': proxies[randint(0, len(proxies))]})
+                res = requests.get(base_url, headers={'User-Agent': ua}, proxies={'https':  proxies[(randint(0, len(proxies)))]})
                 if res.status_code != 200:
                     print(datetime.now(), res.text)
                     # sys.exit()
