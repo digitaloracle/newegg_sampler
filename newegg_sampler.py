@@ -6,8 +6,6 @@ from bs4 import BeautifulSoup
 import time
 from datetime import datetime
 from random import randint
-import re
-
 
 
 def telegram_send_message(title, url):
@@ -16,15 +14,15 @@ def telegram_send_message(title, url):
     except KeyError:
         print(datetime.now(), "missing telegram api key")
     chat_id = '-363919721'
-    content = f'{title}\n[inline URL]({url})'
+    content = f'{title} [inline URL]({url})'
     url = f'https://api.telegram.org/bot{telegram_api_key}/sendMessage'
     payload = {'chat_id': chat_id,
                'text': content,
                'parse_mode': 'MarkdownV2'}
     print(datetime.now(), "found something, sending message")
+    print(json.dumps(payload))
     response = requests.post(url, data=payload)
     return response.json()
-
 
 
 if __name__ == "__main__":
@@ -35,21 +33,19 @@ if __name__ == "__main__":
 
     proxies = ('79.139.56.97:3128', '43.247.39.126:443', '51.83.134.249:3128', '168.169.96.2:8080')
 
-
     try:
         while True:
-            
             res = ''
-            
 
             for base_url in products:
-                time.sleep(3)
+                time.sleep(2)
                 print(datetime.now(), "fetching page")
-                res = requests.get(base_url, headers={'User-Agent': ua}, proxies={'https':  proxies[(randint(0, len(proxies)-1))]})
+                # res = requests.get(base_url, headers={'User-Agent': ua}, proxies={'https':  proxies[(randint(0, len(proxies)-1))]})
+                res = requests.get(base_url, headers={'User-Agent': ua})
+
                 if res.status_code != 200:
                     print(datetime.now(), res.text)
                     # sys.exit()
-
 
                 soup = BeautifulSoup(res.text, 'html.parser')
                 sold_out_tag = False
@@ -58,13 +54,14 @@ if __name__ == "__main__":
                         sold_out_tag = i.select_one("span").contents[0]
                     except AttributeError:
                         pass
-                if sold_out_tag:
+                if sold_out_tag == 'CURRENTLY SOLD OUT':
                     pass
                 else:
                     print(datetime.now(), "found item in stock")
                     print(datetime.now(), base_url, soup.select_one('title').contents[0])
-                    telegram_send_message( soup.select_one('title').contents[0], base_url)
- 
+                    page_title = str(soup.select_one('title').contents[0]).split('-')[0]
+                    telegram_res = telegram_send_message(page_title, base_url)
+                    print(telegram_res)
             time.sleep(1800)
     except KeyboardInterrupt:
         sys.exit()
@@ -73,4 +70,3 @@ if __name__ == "__main__":
     except requests.exceptions.ConnectionError:
         sys.exit()
         print(datetime.now(), "connection error")
-       
